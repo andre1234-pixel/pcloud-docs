@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pCloud Docs</title>
+<!-- Export libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --ink-soft: #4a4a6a;
+    --ink-faint: #9898b8;
+    --paper: #f5f3ee;
+    --paper-warm: #ede9e0;
+    --paper-card: #faf9f6;
+    --accent: #c4622d;
+    --accent-soft: #e8956a;
+    --accent-bg: #fdf0e8;
+    --blue: #2d5fa0;
+    --green: #2d7a4f;
+    --border: #d8d4cb;
+    --shadow: 0 2px 12px rgba(26,26,46,.08);
+    --shadow-lg: 0 8px 32px rgba(26,26,46,.14);
+    --r: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Login screen ─────────────────────────────────────────────────────── */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 0;
+    background: var(--paper);
+  }
+
+  .login-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 56px 64px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+  }
+
+  .login-logo {
+    width: 56px;
+    height: 56px;
+    background: var(--ink);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 28px;
+  }
+
+  .login-card h1 {
+    font-family: 'Lora', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .login-card p {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 36px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 13px 28px;
+    border-radius: var(--r);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .18s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover { background: #b0561f; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(196,98,45,.3); }
+
+  .demo-note {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .demo-note a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .demo-note a:hover { text-decoration: underline; }
+
+
+  /* ── App shell ──────────────────────────────────────────────────────── */
+  #app { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  #app.show { display: flex; }
+
+  /* ── Top bar ─────────────────────────────────────────────────────────── */
+  .topbar {
+    height: 52px;
+    background: var(--paper-card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .topbar-logo {
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 8px;
+  }
+  .topbar-logo span { color: var(--accent); }
+
+  .topbar-divider { width: 1px; height: 24px; background: var(--border); }
+
+  .doc-title-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    outline: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background .15s;
+  }
+  .doc-title-input:hover, .doc-title-input:focus { background: var(--paper-warm); }
+  .doc-title-input::placeholder { color: var(--ink-faint); }
+
+  .save-status {
+    font-size: 12px;
+    color: var(--ink-faint);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .save-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+    transition: background .3s;
+  }
+  .save-dot.saving { background: var(--accent-soft); animation: pulse 1s infinite; }
+  .save-dot.saved  { background: var(--green); }
+  .save-dot.error  { background: #c0392b; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .topbar-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--ink-soft);
+    padding: 6px 14px;
+    border-radius: var(--r);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .topbar-btn:hover { background: var(--paper-warm); color: var(--ink); }
+  .topbar-btn.accent { background: var(--accent); border-color: var(--accent); color: white; }
+  .topbar-btn.accent:hover { background: #b0561f; }
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  .workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────────────────────── */
+  .sidebar {
+    width: 240px;
+    background: var(--paper-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header span {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ink-faint);
+  }
+
+  .sidebar-action {
+    width: 26px; height: 26px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-size: 16px;
+    line-height: 1;
+    transition: all .15s;
+  }
+  .sidebar-action:hover { background: var(--paper-warm); color: var(--ink); }
+
+  .sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--r);
+    cursor: pointer;
+    transition: background .12s;
+    font-size: 13px;
+    color: var(--ink-soft);
+    position: relative;
+  }
+  .sidebar-item:hover { background: var(--paper-warm); color: var(--ink); }
+  .sidebar-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+  .sidebar-item .icon { flex-shrink: 0; font-size: 15px; }
+  .sidebar-item .name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-item .del-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-faint);
+    font-size: 14px;
+    padding: 2px;
+    border-radius: 3px;
+  }
+  .sidebar-item:hover .del-btn { display: block; }
+  .sidebar-item .del-btn:hover { color: #c0392b; background: #fde; }
+
+  .sidebar-empty {
+    padding: 24px 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.6;
+  }
+
+  .sidebar-folder {
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--ink-faint);
+    margin-top: 8px;
+  }
+
+  /* ── Toolbar ─────────────────────────────────────────────────────────── */
+  .editor-toolbar {
+    background: var(--paper-card);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 24px;
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .tb-btn {
+    width: 30px; height: 30px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    transition: all .12s;
+  }
+  .tb-btn:hover { background: var(--paper-warm); color: var(--ink); }
+  .tb-btn.active { background: var(--accent-bg); color: var(--accent); }
+  .tb-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+  .tb-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+  .tb-select {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    cursor: pointer;
+    outline: none;
+  }
+
+  /* ── Editor area ─────────────────────────────────────────────────────── */
+  .editor-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 48px 0;
+    background: var(--paper);
+  }
+
+  .editor-page {
+    max-width: 720px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    min-height: 1040px;
+    padding: 64px 72px;
+  }
+
+  #editor {
+    outline: none;
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    line-height: 1.85;
+    color: var(--ink);
+    min-height: 900px;
+    caret-color: var(--accent);
+  }
+
+  #editor:empty:before {
+    content: attr(data-placeholder);
+    color: var(--ink-faint);
+    pointer-events: none;
+  }
+
+  #editor h1 { font-size: 2em; font-weight: 600; line-height: 1.3; margin: .6em 0 .3em; }
+  #editor h2 { font-size: 1.5em; font-weight: 600; line-height: 1.3; margin: .6em 0 .3em; }
+  #editor h3 { font-size: 1.2em; font-weight: 600; line-height: 1.3; margin: .6em 0 .3em; }
+  #editor p  { margin: .4em 0; }
+  #editor b, #editor strong { font-weight: 700; }
+  #editor i, #editor em { font-style: italic; }
+  #editor u  { text-decoration: underline; }
+  #editor s  { text-decoration: line-through; }
+  #editor ul, #editor ol { padding-left: 1.6em; margin: .4em 0; }
+  #editor li { margin: .2em 0; }
+  #editor blockquote {
+    border-left: 3px solid var(--accent-soft);
+    margin: 1em 0;
+    padding: .5em 1.2em;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  #editor code {
+    font-family: 'DM Mono', monospace;
+    font-size: .85em;
+    background: var(--paper-warm);
+    padding: .1em .4em;
+    border-radius: 3px;
+  }
+  #editor a { color: var(--blue); }
+  #editor hr { border: none; border-top: 1px solid var(--border); margin: 1.5em 0; }
+
+  /* ── No-doc state ────────────────────────────────────────────────────── */
+  #no-doc {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-faint);
+    gap: 12px;
+  }
+  #no-doc .big-icon { font-size: 48px; opacity: .4; }
+  #no-doc p { font-size: 14px; }
+
+  /* ── Word count bar ──────────────────────────────────────────────────── */
+  .status-bar {
+    height: 28px;
+    background: var(--paper-card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 20px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+  }
+
+  /* ── Modal ───────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,46,.45);
+    backdrop-filter: blur(3px);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    width: 380px;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal h3 { font-family: 'Lora', serif; font-size: 18px; margin-bottom: 16px; }
+  .modal input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    margin-bottom: 16px;
+  }
+  .modal input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* ── Toast ───────────────────────────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all .25s;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Scrollbar ───────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .export-opt {
+    display: block; width: 100%; text-align: left;
+    padding: 10px 16px; background: none; border: none;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--ink); transition: background .12s;
+  }
+  .export-opt:hover { background: var(--paper-warm); }
+</style>
+</head>
+<body>
+
+<!-- ── Login Screen ─────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">📄</div>
+    <h1>pCloud Docs</h1>
+    <p>Vul je pCloud-gegevens in en klik op <strong>Inloggen</strong>. De rest gaat automatisch.</p>
+
+    <div id="login-error" style="display:none;background:#fdeaea;border:1px solid #f5c6c6;border-radius:var(--r);padding:10px 14px;font-size:13px;color:#c0392b;margin-bottom:16px;text-align:left;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:20px;">
+      <input type="email" id="login-email" placeholder="E-mailadres"
+        style="padding:11px 14px;border:1px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--paper);color:var(--ink);outline:none;width:100%;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()" />
+      <input type="password" id="login-pass" placeholder="Wachtwoord"
+        style="padding:11px 14px;border:1px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;background:var(--paper);color:var(--ink);outline:none;width:100%;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+
+    <button class="btn-primary" id="login-btn" onclick="doLogin()" style="width:100%;justify-content:center;padding:13px;">
+      Inloggen bij pCloud
+    </button>
+
+    <!-- Wachtstatus -->
+    <div id="login-waiting" style="display:none;margin-top:16px;text-align:center;">
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">
+        ⏳ Er is een nieuw tabblad geopend. Log daar in en kom terug — de app verbindt automatisch.
+      </div>
+      <button class="btn-secondary" onclick="checkTokenNow()">✓ Ik heb ingelogd</button>
+    </div>
+
+    <p class="demo-note" style="margin-top:16px;">
+      Geen pCloud account? <a onclick="loadDemo()">Probeer de demo</a>
+    </p>
+  </div>
+</div>
+
+<!-- ── Main App ──────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">📄 pCloud<span>Docs</span></div>
+    <div class="topbar-divider"></div>
+    <input id="doc-title" class="doc-title-input" placeholder="Naamloos document" value="" />
+    <div class="save-status">
+      <div class="save-dot" id="save-dot"></div>
+      <span id="save-label">—</span>
+    </div>
+    <button class="topbar-btn" onclick="newDoc()">+ Nieuw</button>
+    <div style="position:relative;display:inline-block">
+      <button class="topbar-btn" onclick="toggleExportMenu(event)">⬇ Exporteren ▾</button>
+      <div id="export-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--paper-card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-lg);z-index:200;min-width:190px;overflow:hidden;">
+        <div style="padding:6px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);border-bottom:1px solid var(--border);">Exporteer als…</div>
+        <button onclick="exportDoc('html')"  class="export-opt">📄 &nbsp;HTML-pagina</button>
+        <button onclick="exportDoc('docx')"  class="export-opt">📝 &nbsp;Word (.docx)</button>
+        <button onclick="exportDoc('pdf')"   class="export-opt">📋 &nbsp;PDF</button>
+      </div>
+    </div>
+    <button class="topbar-btn" onclick="doLogout()" title="Uitloggen">👤 Uitloggen</button>
+  </div>
+
+  <!-- Workspace -->
+  <div class="workspace">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span>Documenten</span>
+        <button class="sidebar-action" onclick="newDoc()" title="Nieuw document">+</button>
+      </div>
+      <div class="sidebar-list" id="doc-list">
+        <div class="sidebar-empty">Geen documenten.<br>Maak een nieuw document aan.</div>
+      </div>
+    </div>
+
+    <!-- Editor column -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+      <!-- Formatting toolbar -->
+      <div class="editor-toolbar" id="editor-toolbar">
+        <select class="tb-select" onchange="formatBlock(this.value); this.value=''">
+          <option value="">Stijl…</option>
+          <option value="p">Alinea</option>
+          <option value="h1">Kop 1</option>
+          <option value="h2">Kop 2</option>
+          <option value="h3">Kop 3</option>
+        </select>
+        <div class="tb-sep"></div>
+        <!-- Bold -->
+        <button class="tb-btn" onclick="exec('bold')" title="Vet (Ctrl+B)">
+          <svg viewBox="0 0 24 24"><path d="M15.6 11.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 7.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>
+        </button>
+        <!-- Italic -->
+        <button class="tb-btn" onclick="exec('italic')" title="Cursief (Ctrl+I)">
+          <svg viewBox="0 0 24 24"><path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z"/></svg>
+        </button>
+        <!-- Underline -->
+        <button class="tb-btn" onclick="exec('underline')" title="Onderstrepen (Ctrl+U)">
+          <svg viewBox="0 0 24 24"><path d="M12 17c3.31 0 6-2.69 6-6V3h-2.5v8c0 1.93-1.57 3.5-3.5 3.5S8.5 12.93 8.5 11V3H6v8c0 3.31 2.69 6 6 6zm-7 2v2h14v-2H5z"/></svg>
+        </button>
+        <!-- Strikethrough -->
+        <button class="tb-btn" onclick="exec('strikeThrough')" title="Doorhalen">
+          <svg viewBox="0 0 24 24"><path d="M10 19h4v-3h-4v3zM5 4v3h6v3h2V7h6V4H5zM3 14h18v-2H3v2z"/></svg>
+        </button>
+        <div class="tb-sep"></div>
+        <!-- Align left -->
+        <button class="tb-btn" onclick="exec('justifyLeft')" title="Links uitlijnen">
+          <svg viewBox="0 0 24 24"><path d="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"/></svg>
+        </button>
+        <!-- Align center -->
+        <button class="tb-btn" onclick="exec('justifyCenter')" title="Centreren">
+          <svg viewBox="0 0 24 24"><path d="M7 15v2h10v-2H7zm-4 6h18v-2H3v2zm0-8h18v-2H3v2zm4-6v2h10V7H7zM3 3v2h18V3H3z"/></svg>
+        </button>
+        <!-- Align right -->
+        <button class="tb-btn" onclick="exec('justifyRight')" title="Rechts uitlijnen">
+          <svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zm6-4h12v-2H9v2zm-6-4h18v-2H3v2zm6-4h12V7H9v2zM3 3v2h18V3H3z"/></svg>
+        </button>
+        <div class="tb-sep"></div>
+        <!-- UL -->
+        <button class="tb-btn" onclick="exec('insertUnorderedList')" title="Opsomming">
+          <svg viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+        </button>
+        <!-- OL -->
+        <button class="tb-btn" onclick="exec('insertOrderedList')" title="Genummerde lijst">
+          <svg viewBox="0 0 24 24"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-5v2h14V6H7zm0 12h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
+        </button>
+        <!-- Blockquote -->
+        <button class="tb-btn" onclick="execBlockquote()" title="Citaat">
+          <svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
+        </button>
+        <div class="tb-sep"></div>
+        <!-- Link -->
+        <button class="tb-btn" onclick="insertLink()" title="Link invoegen">
+          <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+        </button>
+        <!-- HR -->
+        <button class="tb-btn" onclick="exec('insertHorizontalRule')" title="Horizontale lijn">
+          <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+        </button>
+        <div class="tb-sep"></div>
+        <!-- Color -->
+        <input type="color" id="text-color" value="#1a1a2e" title="Tekstkleur"
+          style="width:30px;height:30px;border:1px solid var(--border);border-radius:4px;padding:2px;cursor:pointer;background:none;"
+          onchange="exec('foreColor', this.value)" />
+      </div>
+
+      <!-- Editor / No-doc -->
+      <div id="no-doc">
+        <div class="big-icon">📝</div>
+        <p>Selecteer een document of maak een nieuw aan</p>
+        <button class="btn-primary" style="margin-top:8px" onclick="newDoc()">+ Nieuw document</button>
+      </div>
+
+      <div class="editor-area" id="editor-area" style="display:none">
+        <div class="editor-page">
+          <div id="editor"
+               contenteditable="true"
+               data-placeholder="Begin met schrijven…"
+               spellcheck="true"
+               lang="nl">
+          </div>
+        </div>
+      </div>
+
+      <!-- Status bar -->
+      <div class="status-bar">
+        <span id="word-count">0 woorden</span>
+        <span id="char-count">0 tekens</span>
+        <span id="current-path" style="margin-left:auto;"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- New doc modal -->
+<div class="modal-overlay" id="new-modal">
+  <div class="modal">
+    <h3>Nieuw document</h3>
+    <input id="new-doc-name" type="text" placeholder="Documentnaam…" />
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('new-modal')">Annuleren</button>
+      <button class="btn-primary" onclick="createDoc()">Aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const PCLOUD_BASE   = 'https://eapi.pcloud.com';
+const DOCS_FOLDER   = '/pCloudDocs';  // EU: eapi.pcloud.com
+let   accessToken   = '';
+let   docsFolderId  = '';
+let   docs          = [];        // [{name, fileId, content}]
+let   activeDocIdx  = -1;
+let   saveTimer     = null;
+let   isDemoMode    = false;
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  const stored = localStorage.getItem('pcloud_token');
+  if (stored) { accessToken = stored; startApp(); }
+};
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+let pollTimer = null;
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  if (!email || !pass) { showLoginError('Vul je e-mailadres en wachtwoord in.'); return; }
+
+  // Wis eventueel oud token
+  localStorage.removeItem('pcloud_token');
+
+  // Open callback pagina in nieuw tabblad — die haalt het token op en slaat het op
+  const callbackUrl = location.href.replace('pcloud-docs.html', 'pcloud-callback.html')
+    + '?email=' + encodeURIComponent(email)
+    + '&pass='  + encodeURIComponent(pass);
+  window.open(callbackUrl, '_blank');
+
+  // Toon wachtstatus
+  document.getElementById('login-btn').style.display = 'none';
+  document.getElementById('login-waiting').style.display = 'block';
+  document.getElementById('login-error').style.display = 'none';
+
+  // Poll localStorage elke seconde op het token
+  pollTimer = setInterval(checkTokenNow, 1000);
+}
+
+function checkTokenNow() {
+  const token = localStorage.getItem('pcloud_token');
+  if (token) {
+    clearInterval(pollTimer);
+    accessToken = token;
+    startApp();
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('login-btn').style.display = 'flex';
+  document.getElementById('login-waiting').style.display = 'none';
+}
+
+function doLogout() {
+  // Verwijder token lokaal en herlaad
+  if (accessToken && !isDemoMode) {
+    // Stuur logout naar pCloud op de achtergrond (niet-blokkerend)
+    fetch(`${PCLOUD_BASE}/logout?auth=${accessToken}`).catch(() => {});
+  }
+  accessToken = ''; isDemoMode = false;
+  localStorage.removeItem('pcloud_token');
+  location.reload();
+}
+
+// ── Demo mode ─────────────────────────────────────────────────────────────────
+function loadDemo() {
+  isDemoMode = true;
+  accessToken = 'DEMO';
+  docs = [
+    { name: 'Welkom bij pCloud Docs', fileId: 'demo1', content: '<h1>Welkom bij pCloud Docs</h1><p>Dit is een <strong>demo</strong> van de tekstbewerker. Je kunt hier schrijven, tekst opmaken en documenten beheren.</p><h2>Opmaak mogelijkheden</h2><ul><li>Vetgedrukt, cursief en onderstrepen</li><li>Koppen en alinea\'s</li><li>Opsommingen en genummerde lijsten</li><li>Citaten en links</li></ul><p>Verbind met pCloud om documenten automatisch op te slaan in de cloud ☁️</p>' },
+    { name: 'Mijn notities', fileId: 'demo2', content: '<h2>Notities</h2><p>Hier kun je al je notities kwijt. Klik in de tekst en begin te schrijven!</p>' }
+  ];
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  renderDocList();
+  toast('Demo modus — documenten worden niet opgeslagen op pCloud');
+}
+
+// ── App init ──────────────────────────────────────────────────────────────────
+async function startApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  setSaveStatus('idle');
+  await ensureDocsFolder();
+  await loadDocList();
+}
+
+async function ensureDocsFolder() {
+  if (isDemoMode) return;
+  try {
+    // list root, find or create /pCloudDocs
+    const res  = await pcloud('listfolder', { folderid: 0 });
+    const found = res.metadata.contents.find(i => i.name === 'pCloudDocs' && i.isfolder);
+    if (found) { docsFolderId = found.folderid; return; }
+    const mk = await pcloud('createfolder', { path: DOCS_FOLDER });
+    docsFolderId = mk.metadata.folderid;
+  } catch(e) { toast('Kon pCloud map niet aanmaken: ' + e.message); }
+}
+
+async function loadDocList() {
+  if (isDemoMode) { renderDocList(); return; }
+  try {
+    const res = await pcloud('listfolder', { folderid: docsFolderId });
+    docs = res.metadata.contents
+      .filter(f => !f.isfolder && f.name.endsWith('.html'))
+      .map(f => ({ name: f.name.replace('.html',''), fileId: f.fileid, content: '' }));
+    renderDocList();
+  } catch(e) { toast('Fout bij laden documenten'); }
+}
+
+// ── pCloud API ────────────────────────────────────────────────────────────────
+async function pcloud(method, params = {}) {
+  const url = new URL(`${PCLOUD_BASE}/${method}`);
+  // Tokens via gebruikersnaam/wachtwoord vereisen 'auth', niet 'access_token'
+  url.searchParams.set('auth', accessToken);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const res  = await fetch(url);
+  const data = await res.json();
+  if (data.result !== 0) throw new Error(data.error || `pCloud fout ${data.result}`);
+  return data;
+}
+
+async function pcloudUpload(filename, content) {
+  const url  = new URL(`${PCLOUD_BASE}/uploadfile`);
+  url.searchParams.set('auth', accessToken);
+  url.searchParams.set('folderid', docsFolderId);
+  url.searchParams.set('filename', filename);
+  url.searchParams.set('nopartial', 1);
+
+  const blob = new Blob([content], { type: 'text/html' });
+  const fd   = new FormData();
+  fd.append(filename, blob, filename);
+
+  const res  = await fetch(url, { method: 'POST', body: fd });
+  const data = await res.json();
+  if (data.result !== 0) throw new Error(data.error);
+  return data.metadata[0];
+}
+
+async function pcloudRead(fileId) {
+  // Get download link then fetch content
+  const link = await pcloud('getfilelink', { fileid: fileId });
+  const dlUrl = 'https://' + link.hosts[0] + link.path;
+  const res   = await fetch(dlUrl);
+  return res.text();
+}
+
+// ── Document list ─────────────────────────────────────────────────────────────
+function renderDocList() {
+  const list = document.getElementById('doc-list');
+  if (docs.length === 0) {
+    list.innerHTML = '<div class="sidebar-empty">Geen documenten.<br>Klik op + om te beginnen.</div>';
+    return;
+  }
+  list.innerHTML = docs.map((d, i) => `
+    <div class="sidebar-item ${i === activeDocIdx ? 'active' : ''}" onclick="openDoc(${i})">
+      <span class="icon">📄</span>
+      <span class="name">${escHtml(d.name)}</span>
+      <button class="del-btn" onclick="deleteDoc(event,${i})" title="Verwijderen">✕</button>
+    </div>
+  `).join('');
+}
+
+// ── Open / create / delete ────────────────────────────────────────────────────
+async function openDoc(idx) {
+  if (activeDocIdx === idx) return;
+
+  // Save current first
+  if (activeDocIdx !== -1) saveCurrent(true);
+
+  activeDocIdx = idx;
+  const doc = docs[idx];
+
+  document.getElementById('doc-title').value = doc.name;
+  document.getElementById('no-doc').style.display = 'none';
+  document.getElementById('editor-area').style.display = 'block';
+
+  if (!doc.content) {
+    if (!isDemoMode) {
+      setSaveStatus('saving');
+      try {
+        doc.content = await pcloudRead(doc.fileId);
+      } catch(e) { doc.content = ''; }
+      setSaveStatus('saved');
+    }
+  }
+
+  document.getElementById('editor').innerHTML = doc.content;
+  updateCounts();
+  renderDocList();
+  document.getElementById('current-path').textContent =
+    isDemoMode ? 'Demo' : `${DOCS_FOLDER}/${doc.name}.html`;
+}
+
+function newDoc() {
+  document.getElementById('new-doc-name').value = 'Nieuw document';
+  document.getElementById('new-modal').classList.add('show');
+  setTimeout(() => {
+    const inp = document.getElementById('new-doc-name');
+    inp.focus(); inp.select();
+  }, 50);
+}
+
+async function createDoc() {
+  const name = document.getElementById('new-doc-name').value.trim();
+  if (!name) return;
+  closeModal('new-modal');
+
+  const doc = { name, fileId: '', content: '' };
+  docs.unshift(doc);
+
+  if (!isDemoMode) {
+    setSaveStatus('saving');
+    try {
+      const meta = await pcloudUpload(name + '.html', '');
+      docs[0].fileId = meta.fileid;
+      setSaveStatus('saved');
+    } catch(e) { toast('Fout bij aanmaken: ' + e.message); setSaveStatus('error'); }
+  } else {
+    docs[0].fileId = 'demo_' + Date.now();
+  }
+
+  activeDocIdx = 0;
+  renderDocList();
+  await openDoc(0);
+  document.getElementById('editor').focus();
+}
+
+async function deleteDoc(e, idx) {
+  e.stopPropagation();
+  if (!confirm(`"${docs[idx].name}" verwijderen?`)) return;
+
+  if (!isDemoMode && docs[idx].fileId) {
+    try { await pcloud('deletefile', { fileid: docs[idx].fileId }); }
+    catch(e) { toast('Fout bij verwijderen'); return; }
+  }
+
+  docs.splice(idx, 1);
+  if (activeDocIdx === idx) {
+    activeDocIdx = -1;
+    document.getElementById('no-doc').style.display = 'flex';
+    document.getElementById('editor-area').style.display = 'none';
+    document.getElementById('doc-title').value = '';
+  } else if (activeDocIdx > idx) {
+    activeDocIdx--;
+  }
+  renderDocList();
+  toast('Document verwijderd');
+}
+
+// ── Auto-save ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const editor = document.getElementById('editor');
+  if (!editor) return;
+  editor.addEventListener('input', () => {
+    setSaveStatus('saving');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveCurrent(), 2000);
+    updateCounts();
+  });
+
+  document.getElementById('doc-title').addEventListener('input', () => {
+    if (activeDocIdx === -1) return;
+    docs[activeDocIdx].name = document.getElementById('doc-title').value || 'Naamloos';
+    renderDocList();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => saveCurrent(), 2000);
+  });
+});
+
+async function saveCurrent(silent = false) {
+  if (activeDocIdx === -1) return;
+  const doc = docs[activeDocIdx];
+  doc.content = document.getElementById('editor').innerHTML;
+
+  if (isDemoMode) { if (!silent) setSaveStatus('saved'); return; }
+  if (!doc.fileId) return;
+
+  if (!silent) setSaveStatus('saving');
+  try {
+    // Re-upload (pCloud replaces on same filename+folder)
+    const newName = doc.name + '.html';
+    const meta = await pcloudUpload(newName, doc.content);
+    doc.fileId = meta.fileid;
+    if (!silent) setSaveStatus('saved');
+    if (!silent) toast('Opgeslagen op pCloud ✓');
+  } catch(e) {
+    setSaveStatus('error');
+    if (!silent) toast('Opslaan mislukt: ' + e.message);
+  }
+}
+
+// ── Save status UI ────────────────────────────────────────────────────────────
+function setSaveStatus(state) {
+  const dot   = document.getElementById('save-dot');
+  const label = document.getElementById('save-label');
+  dot.className = 'save-dot ' + state;
+  label.textContent = { saving: 'Opslaan…', saved: 'Opgeslagen', error: 'Fout', idle: '—' }[state] || '—';
+}
+
+// ── Formatting ────────────────────────────────────────────────────────────────
+function exec(cmd, val = null) {
+  document.getElementById('editor').focus();
+  document.execCommand(cmd, false, val);
+}
+
+function formatBlock(tag) {
+  if (!tag) return;
+  document.getElementById('editor').focus();
+  document.execCommand('formatBlock', false, tag);
+}
+
+function execBlockquote() {
+  document.getElementById('editor').focus();
+  document.execCommand('formatBlock', false, 'blockquote');
+}
+
+function insertLink() {
+  const url = prompt('URL invoeren:');
+  if (url) exec('createLink', url);
+}
+
+// ── Export dropdown ───────────────────────────────────────────────────────────
+function toggleExportMenu(e) {
+  e && e.stopPropagation();
+  const m = document.getElementById('export-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', () => {
+  const m = document.getElementById('export-menu');
+  if (m) m.style.display = 'none';
+});
+
+// ── Export ────────────────────────────────────────────────────────────────────
+async function exportDoc(format = 'html') {
+  document.getElementById('export-menu').style.display = 'none';
+  if (activeDocIdx === -1) { toast('Geen document geselecteerd'); return; }
+  const doc  = docs[activeDocIdx];
+  const name = doc.name || 'document';
+  const html = document.getElementById('editor').innerHTML;
+
+  if (format === 'html') {
+    const full = `<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>${escHtml(name)}</title>
+<style>body{font-family:Georgia,serif;max-width:700px;margin:80px auto;font-size:18px;line-height:1.8;color:#1a1a2e}h1,h2,h3{margin:.6em 0 .3em}blockquote{border-left:3px solid #c4622d;padding:.5em 1em;color:#666;font-style:italic}code{background:#f0ede6;padding:.1em .4em;border-radius:3px}</style>
+</head><body><h1>${escHtml(name)}</h1>${html}</body></html>`;
+    download(new Blob([full], {type:'text/html'}), name + '.html');
+
+  } else if (format === 'pdf') {
+    toast('PDF wordt gegenereerd…', 5000);
+    const container = document.createElement('div');
+    container.style.cssText = 'font-family:Georgia,serif;font-size:14px;line-height:1.8;color:#1a1a2e;padding:32px';
+    container.innerHTML = `<h1 style="margin-bottom:24px">${escHtml(name)}</h1>${html}`;
+    document.body.appendChild(container);
+    await html2pdf().set({
+      margin: [15, 20],
+      filename: name + '.pdf',
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(container).save();
+    document.body.removeChild(container);
+    toast('PDF gedownload ✓');
+
+  } else if (format === 'docx') {
+    toast('Word-document wordt aangemaakt…', 4000);
+    try {
+      await exportDocx(name, html);
+      toast('Word-document gedownload ✓');
+    } catch(e) {
+      console.error(e);
+      toast('Fout bij aanmaken Word-document');
+    }
+  }
+}
+
+async function exportDocx(name, html) {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel,
+          AlignmentType, UnderlineType } = docx;
+
+  // Parse the HTML into docx paragraphs
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  const children = [];
+
+  function runsFromEl(el) {
+    const runs = [];
+    el.childNodes.forEach(node => {
+      if (node.nodeType === 3) {
+        if (node.textContent) runs.push(new TextRun({ text: node.textContent }));
+      } else if (node.nodeType === 1) {
+        const tag = node.tagName.toLowerCase();
+        const inner = node.innerText || node.textContent || '';
+        if (!inner) return;
+        const base = {
+          bold:      tag === 'b' || tag === 'strong',
+          italics:   tag === 'i' || tag === 'em',
+          underline: (tag === 's' || tag === 'strike') ? undefined : (tag === 'u' ? {} : undefined),
+          strike:    tag === 's' || tag === 'strike',
+        };
+        // recurse for nested
+        const nested = runsFromEl(node);
+        if (nested.length) {
+          nested.forEach(r => runs.push(r));
+        } else {
+          runs.push(new TextRun({ text: inner, ...base }));
+        }
+      }
+    });
+    return runs;
+  }
+
+  container.childNodes.forEach(node => {
+    if (node.nodeType !== 1) return;
+    const tag  = node.tagName.toLowerCase();
+    const text = node.innerText || node.textContent || '';
+
+    if (tag === 'h1') {
+      children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text, bold: true })] }));
+    } else if (tag === 'h2') {
+      children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text, bold: true })] }));
+    } else if (tag === 'h3') {
+      children.push(new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text, bold: true })] }));
+    } else if (tag === 'ul') {
+      node.querySelectorAll('li').forEach(li => {
+        children.push(new Paragraph({
+          bullet: { level: 0 },
+          children: [new TextRun({ text: li.innerText || li.textContent || '' })]
+        }));
+      });
+    } else if (tag === 'ol') {
+      node.querySelectorAll('li').forEach((li, i) => {
+        children.push(new Paragraph({
+          numbering: { reference: 'default-numbering', level: 0 },
+          children: [new TextRun({ text: li.innerText || li.textContent || '' })]
+        }));
+      });
+    } else if (tag === 'blockquote') {
+      children.push(new Paragraph({
+        indent: { left: 720 },
+        children: [new TextRun({ text, italics: true, color: '666666' })]
+      }));
+    } else if (tag === 'hr') {
+      children.push(new Paragraph({
+        border: { bottom: { style: 'single', size: 6, color: 'CCCCCC', space: 1 } },
+        children: []
+      }));
+    } else {
+      const runs = runsFromEl(node);
+      if (runs.length) {
+        children.push(new Paragraph({ children: runs }));
+      } else if (text.trim()) {
+        children.push(new Paragraph({ children: [new TextRun({ text })] }));
+      }
+    }
+  });
+
+  // Title paragraph at top
+  children.unshift(
+    new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: name, bold: true })] }),
+    new Paragraph({ children: [] })
+  );
+
+  const document = new Document({
+    numbering: {
+      config: [{
+        reference: 'default-numbering',
+        levels: [{ level: 0, format: 'decimal', text: '%1.', alignment: AlignmentType.LEFT,
+          style: { paragraph: { indent: { left: 720, hanging: 360 } } } }]
+      }]
+    },
+    sections: [{
+      properties: {
+        page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
+      },
+      children
+    }]
+  });
+
+  const buffer = await Packer.toBlob(document);
+  download(buffer, name + '.docx');
+}
+
+function download(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+// ── Word/char count ───────────────────────────────────────────────────────────
+function updateCounts() {
+  const text  = document.getElementById('editor').innerText || '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.length;
+  document.getElementById('word-count').textContent = `${words} woord${words !== 1 ? 'en' : ''}`;
+  document.getElementById('char-count').textContent = `${chars} teken${chars !== 1 ? 's' : ''}`;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+document.getElementById('new-modal').addEventListener('keydown', e => {
+  if (e.key === 'Enter') createDoc();
+  if (e.key === 'Escape') closeModal('new-modal');
+});
+
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// Save on Ctrl+S
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveCurrent();
+  }
+});
+
+// Save before leaving
+window.addEventListener('beforeunload', () => {
+  if (activeDocIdx !== -1) saveCurrent(true);
+});
+</script>
+</body>
+</html>

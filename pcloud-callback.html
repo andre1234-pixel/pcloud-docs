@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>pCloud Docs — Inloggen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f5f3ee;
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; color: #1a1a2e;
+  }
+  .card {
+    background: white;
+    border: 1px solid #d8d4cb;
+    border-radius: 16px;
+    padding: 48px 56px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(26,26,46,.12);
+  }
+  .icon { font-size: 48px; margin-bottom: 20px; }
+  h2 { font-size: 20px; margin-bottom: 10px; }
+  p  { font-size: 14px; color: #4a4a6a; line-height: 1.6; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #d8d4cb;
+    border-top-color: #c4622d;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 20px auto 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .success { color: #2d7a4f; }
+  .error   { color: #c0392b; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon" id="icon">📄</div>
+  <h2 id="title">Bezig met inloggen…</h2>
+  <p id="msg">Even geduld, je wordt verbonden met pCloud.</p>
+  <div class="spinner" id="spinner"></div>
+</div>
+
+<script>
+(async function() {
+  const params = new URLSearchParams(location.search);
+  const email  = params.get('email');
+  const pass   = params.get('pass');
+
+  if (!email || !pass) {
+    setStatus('❌', 'Geen gegevens', 'Sluit dit tabblad en probeer opnieuw.', true);
+    return;
+  }
+
+  try {
+    const url = new URL('https://eapi.pcloud.com/userinfo');
+    url.searchParams.set('username', email);
+    url.searchParams.set('password', pass);
+    url.searchParams.set('getauth', 1);
+    url.searchParams.set('authexpire', 31536000); // 1 jaar
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.result !== 0) {
+      const msgs = {
+        2000: 'Verkeerd e-mailadres of wachtwoord.',
+        2012: 'Te veel pogingen. Probeer later opnieuw.',
+        2014: 'Account geblokkeerd.',
+      };
+      setStatus('❌', 'Inloggen mislukt', msgs[data.result] || `Fout ${data.result}`, true);
+      return;
+    }
+
+    const token = data.token || data.auth;
+    if (!token) {
+      setStatus('❌', 'Geen token ontvangen', 'pCloud stuurde geen geldig token terug.', true);
+      return;
+    }
+
+    // Sla token op — de hoofdapp pikt dit automatisch op
+    localStorage.setItem('pcloud_token', token);
+
+    setStatus('✅', 'Ingelogd!', 'Je kunt dit tabblad sluiten. De app start automatisch.', false);
+
+    // Probeer dit tabblad automatisch te sluiten na 2 seconden
+    setTimeout(() => { try { window.close(); } catch(e) {} }, 2000);
+
+  } catch(e) {
+    setStatus('❌', 'Verbindingsfout', 'Controleer je internetverbinding en probeer opnieuw.', true);
+  }
+
+  function setStatus(icon, title, msg, isError) {
+    document.getElementById('icon').textContent    = icon;
+    document.getElementById('title').textContent   = title;
+    document.getElementById('msg').textContent     = msg;
+    document.getElementById('spinner').style.display = 'none';
+    if (isError) document.getElementById('title').classList.add('error');
+    else         document.getElementById('title').classList.add('success');
+  }
+})();
+</script>
+</body>
+</html>
