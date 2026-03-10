@@ -709,9 +709,68 @@ let   isDemoMode    = false;
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 window.onload = () => {
+  // Als dit de callback-aanroep is (vanuit nieuw tabblad), token ophalen en opslaan
+  const params = new URLSearchParams(location.search);
+  if (params.has('pcloud_login')) {
+    handleCallbackPage(params.get('email'), params.get('pass'));
+    return;
+  }
+  // Normaal opstarten
   const stored = localStorage.getItem('pcloud_token');
   if (stored) { accessToken = stored; startApp(); }
 };
+
+// ── Callback pagina (zelfde bestand, andere querystring) ──────────────────────
+async function handleCallbackPage(email, pass) {
+  // Verberg alles behalve een statuskaart
+  document.body.innerHTML = `
+    <div style="font-family:'DM Sans',sans-serif;background:#f5f3ee;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+      <div id="cb-card" style="background:white;border:1px solid #d8d4cb;border-radius:16px;padding:48px 56px;text-align:center;max-width:380px;width:90%;box-shadow:0 8px 32px rgba(26,26,46,.12);">
+        <div style="font-size:44px;margin-bottom:16px;" id="cb-icon">📄</div>
+        <h2 style="font-size:18px;margin-bottom:8px;" id="cb-title">Bezig met inloggen…</h2>
+        <p style="font-size:13px;color:#4a4a6a;line-height:1.6;" id="cb-msg">Even geduld.</p>
+        <div id="cb-spin" style="width:32px;height:32px;border:3px solid #d8d4cb;border-top-color:#c4622d;border-radius:50%;animation:spin .8s linear infinite;margin:18px auto 0;"></div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      </div>
+    </div>`;
+
+  function cbSet(icon, title, msg, ok) {
+    document.getElementById('cb-icon').textContent  = icon;
+    document.getElementById('cb-title').textContent = title;
+    document.getElementById('cb-title').style.color = ok ? '#2d7a4f' : '#c0392b';
+    document.getElementById('cb-msg').textContent   = msg;
+    document.getElementById('cb-spin').style.display = 'none';
+  }
+
+  if (!email || !pass) { cbSet('❌','Geen gegevens','Sluit dit tabblad en probeer opnieuw.',false); return; }
+
+  try {
+    const url = new URL('https://eapi.pcloud.com/userinfo');
+    url.searchParams.set('username', email);
+    url.searchParams.set('password', pass);
+    url.searchParams.set('getauth', 1);
+    url.searchParams.set('authexpire', 31536000);
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.result !== 0) {
+      const msgs = { 2000:'Verkeerd e-mailadres of wachtwoord.', 2012:'Te veel pogingen.', 2014:'Account geblokkeerd.' };
+      cbSet('❌', 'Inloggen mislukt', msgs[data.result] || `Fout ${data.result}`, false);
+      return;
+    }
+
+    const token = data.token || data.auth;
+    if (!token) { cbSet('❌','Geen token','pCloud stuurde geen geldig token terug.',false); return; }
+
+    localStorage.setItem('pcloud_token', token);
+    cbSet('✅', 'Ingelogd!', 'Je kunt dit tabblad sluiten. De app start automatisch.', true);
+    setTimeout(() => { try { window.close(); } catch(e) {} }, 1500);
+
+  } catch(e) {
+    cbSet('❌','Verbindingsfout','Controleer je internetverbinding.',false);
+  }
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 let pollTimer = null;
@@ -725,7 +784,7 @@ function doLogin() {
   localStorage.removeItem('pcloud_token');
 
   // Open callback pagina in nieuw tabblad — die haalt het token op en slaat het op
-  const callbackUrl = location.href.replace('pcloud-docs.html', 'pcloud-callback.html')
+  const callbackUrl = 'https://andre1234-pixel.github.io/pcloud-docs/pcloud-callback.html'
     + '?email=' + encodeURIComponent(email)
     + '&pass='  + encodeURIComponent(pass);
   window.open(callbackUrl, '_blank');
